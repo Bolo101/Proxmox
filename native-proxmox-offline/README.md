@@ -19,20 +19,20 @@ Vous trouverez ci-après les étapes d'installation à effectuer sur un serveur 
 * Brancher la clé USB sur le serveur proxmox
 * Détecter la clé USB avec la commande 'lsblk'
 ```bash
-$ lsblk
+lsblk
 ```
 * Monter la clé USB.
 ```bash
-$ mnt /dev/sdXX /mnt 
+mount /dev/sdXX /mnt 
 //Remplacer XX par la sortie de la commande lsblk correspondant à la clé
 ```
 * Transférer les scripts et paquets de la clé vers le serveur
 ```bash
-$ rsync -a /mnt/native-proxmox/ /root/ --progress
+rsync -a /mnt/native-proxmox/ /root/ --progress
 ```
 * Executer le script 'script0.sh'
 ```bash
-$ ./script0.sh
+./script0.sh
 ```
 * Renseigner un mot de passe pour l'utilisateur 'proxmox'
 Cet utilisateur permettra d'accéder à une session graphique
@@ -47,17 +47,17 @@ Au redémarrage du poste vous serrez face à un champs de connexion graphique.
 
 * Obtenir l'adresse IP du poste
 ```bash
-$ip a
+ip a
 ```
 Noter l'IP de vmbr0
 
 * Passer en tant que 'root'
 ```
-$ su -
+su -
 ```
 * Exécution du script 'script1.sh'
 ```bash
-$./script1.sh
+./script1.sh
 ```
 * Au redémarrage se reconnecter en tant que 'proxmox'
 
