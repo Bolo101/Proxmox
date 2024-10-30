@@ -27,9 +27,6 @@ if [ ! -f "$MARKER_FILE" ]; then
     # Installer les paquets GRUB
     apt install grub2-common -y
     
-    # Installer zenity pour la fênetre de dialogue
-    apt install zenity -y
-
     # Installation des paquets Proxmox VE nécessaires
     apt install proxmox-ve postfix open-iscsi chrony -y
 
@@ -65,53 +62,6 @@ else
     # Suppression os-prober
     apt remove os-prober -y
 
-    # Configurer le stockage pour Proxmox
-    cat <<EOL > /etc/pve/storage.cfg
-dir: local
-    path /var/lib/vz
-    content iso,backup,vztmpl
-    maxfiles 3
-
-EOL
-
-    # Configurer l'adresse IP statique pour l'interface réseau principale
-    cat <<EOL > /etc/network/interfaces
-# This file describes the network interfaces available on your system
-# and how to activate them. For more information, see interfaces(5).
-
-# The loopback network interface
-auto lo
-iface lo inet loopback
-
-# The primary network interface
-auto $SECOND_INTERFACE
-iface $SECOND_INTERFACE inet manual
-
-# Bridge interface
-auto vmbr0
-iface vmbr0 inet static
-    address 172.16.1.2
-    netmask 255.255.255.0
-    gateway 172.16.1.254
-    bridge_ports $SECOND_INTERFACE
-    bridge_stp off
-    bridge_fd 0
-EOL
-
-    # Mettre à jour le fichier /etc/hosts
-    cat <<EOL > /etc/hosts
-127.0.0.1       localhost
-172.16.1.1       proxmox.$LAST_NAME.local proxmox
-
-# The following lines are desirable for IPv6 capable hosts
-::1     localhost ip6-localhost ip6-loopback
-ff02::1 ip6-allnodes
-ff02::2 ip6-allrouters
-EOL
-
-    # Appliquer les changements de réseau
-    systemctl restart networking
-
     # Configurer le démarrage automatique des services Proxmox
     systemctl enable pvedaemon
     systemctl enable pveproxy
@@ -119,9 +69,6 @@ EOL
 
     # Terminer les configurations de base
     apt autoremove -y
-    
-    # Supprimer zenity
-    apt remove zenity --purge -y
     
     # Redémarrer les services Proxmox pour appliquer la nouvelle configuration
     poweroff
