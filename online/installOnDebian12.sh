@@ -10,10 +10,14 @@ if [ ! -f "$MARKER_FILE" ]; then
     > /etc/apt/sources.list
 
     # Ajouter les dépôts Debian et Proxmox
-    echo "deb http://ftp.debian.org/debian bookworm main contrib" >> /etc/apt/sources.list
-    echo "deb http://ftp.debian.org/debian bookworm-updates main contrib" >> /etc/apt/sources.list
-    echo "deb http://security.debian.org/debian-security bookworm-security main contrib" >> /etc/apt/sources.list
-    echo "deb [arch=amd64] http://download.proxmox.com/debian/pve bookworm pve-no-subscription" > /etc/apt/sources.list.d/pve-install-repo.list
+    #echo "deb http://ftp.debian.org/debian bookworm main contrib" >> /etc/apt/sources.list
+    #echo "deb http://ftp.debian.org/debian bookworm-updates main contrib" >> /etc/apt/sources.list
+    #echo "deb http://security.debian.org/debian-security bookworm-security main contrib" >> /etc/apt/sources.list
+    #echo "deb [arch=amd64] http://download.proxmox.com/debian/pve bookworm pve-no-subscription" > /etc/apt/sources.list.d/pve-install-repo.list
+
+    apt update && apt full-upgrade -y
+
+    apt install wget
 
     # Ajouter la clé du dépôt Proxmox
     wget https://enterprise.proxmox.com/debian/proxmox-release-bookworm.gpg -O /etc/apt/trusted.gpg.d/proxmox-release-bookworm.gpg
@@ -26,9 +30,7 @@ if [ ! -f "$MARKER_FILE" ]; then
 
     # Installer les paquets GRUB
     apt install grub2-common -y
-    
-    # Installation des paquets Proxmox VE nécessaires
-    apt install proxmox-ve postfix open-iscsi chrony -y
+
 
     # Créer un fichier de marquage pour indiquer que le script a été exécuté avant le redémarrage
     touch "$MARKER_FILE"
@@ -42,16 +44,8 @@ else
     # Supprimer le fichier de marquage
     rm "$MARKER_FILE"
 
-    # Récupérer la seconde interface réseau
-    SECOND_INTERFACE=$(ip -o link show | awk -F': ' '{print $2}' | sed -n '2p')
-
-    # Demander à l'utilisateur de saisir le nom de domaine
-    LAST_NAME=$(zenity --entry --title="Nom de domaine" --text="Veuillez entrer le nom de domaine en minuscule:")
-
-    # Si l'utilisateur annule ou ne saisit rien, utiliser une valeur par défaut
-    if [ -z "$LAST_NAME" ]; then
-        LAST_NAME="default"
-    fi
+    # Installation des paquets Proxmox VE nécessaires
+    apt install proxmox-ve postfix open-iscsi chrony -y
 
     # Suppression des anciens noyaux Debian
     apt remove linux-image-amd64 'linux-image-6.1*' -y
