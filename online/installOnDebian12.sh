@@ -19,19 +19,15 @@ if [ ! -f "$MARKER_FILE" ]; then
 
     apt install wget -y
 
-    sleep 5
-
     # Ajouter la clé du dépôt Proxmox
     wget https://enterprise.proxmox.com/debian/proxmox-release-bookworm.gpg -O /etc/apt/trusted.gpg.d/proxmox-release-bookworm.gpg
 
     # Mettre à jour le dépôt et le système
     apt update && apt full-upgrade -y
 
-    sleep 5
-
     # Installer le noyau Proxmox
     apt install proxmox-default-kernel -y
-    sleep 5
+ 
     # Installer les paquets GRUB
     apt install grub2-common -y
 
