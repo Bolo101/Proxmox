@@ -7,7 +7,7 @@ if [ ! -f "$MARKER_FILE" ]; then
     # Première exécution du script
 
     # Supprimer le contenu du fichier /etc/apt/sources.list
-    > /etc/apt/sources.list
+    #> /etc/apt/sources.list
 
     # Ajouter les dépôts Debian et Proxmox
     #echo "deb http://ftp.debian.org/debian bookworm main contrib" >> /etc/apt/sources.list
