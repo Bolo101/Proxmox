@@ -13,7 +13,7 @@ if [ ! -f "$MARKER_FILE" ]; then
     #echo "deb http://ftp.debian.org/debian bookworm main contrib" >> /etc/apt/sources.list
     #echo "deb http://ftp.debian.org/debian bookworm-updates main contrib" >> /etc/apt/sources.list
     #echo "deb http://security.debian.org/debian-security bookworm-security main contrib" >> /etc/apt/sources.list
-    #echo "deb [arch=amd64] http://download.proxmox.com/debian/pve bookworm pve-no-subscription" > /etc/apt/sources.list.d/pve-install-repo.list
+    echo "deb [arch=amd64] http://download.proxmox.com/debian/pve bookworm pve-no-subscription" > /etc/apt/sources.list.d/pve-install-repo.list
 
     apt update && apt full-upgrade -y
 
