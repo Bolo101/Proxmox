@@ -66,24 +66,24 @@ else
 
     # Terminer les configurations de base
     apt autoremove -y
-    cat <<EOL > /etc/network/interfaces
+#    cat <<EOL > /etc/network/interfaces
 
-auto lo
-iface lo inet loopback
+#auto lo
+#iface lo inet loopback
 
-iface $SECOND_INTERFACE inet manual
+#iface $SECOND_INTERFACE inet manual
 
-auto vmbr0
-iface vmbr0 inet static
-    address 192.168.122.146/24
-    gateway 192.168.122.1
-    bridge-ports $SECOND_INTERFACE
-    bridge-stp off
-    bridge-fd 0
+#auto vmbr0
+#iface vmbr0 inet static
+#    address 192.168.122.146/24
+#    gateway 192.168.122.1
+#    bridge-ports $SECOND_INTERFACE
+#    bridge-stp off
+#    bridge-fd 0
 
-source /etc/network/interfaces.d/*
+#source /etc/network/interfaces.d/*
 
-EOL
+#EOL
     
     # Redémarrer les services Proxmox pour appliquer la nouvelle configuration
     poweroff
