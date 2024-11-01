@@ -71,7 +71,8 @@ else
 auto lo
 iface lo inet loopback
 
-iface $SECOND_INTERFACE inet manual
+auto $SECOND_INTERFACE
+iface $SECOND_INTERFACE inet static
 
 auto vmbr0
 iface vmbr0 inet static
@@ -82,7 +83,6 @@ iface vmbr0 inet static
     bridge-fd 0
 
 source /etc/network/interfaces.d/*
-
 EOL
 
     sed -i 's/127.0.1.1/192.168.122.146/g' /etc/hosts    
