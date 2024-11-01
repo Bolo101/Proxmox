@@ -34,6 +34,25 @@ if [ ! -f "$MARKER_FILE" ]; then
     # Installer les paquets GRUB
     apt install grub2-common -y
 
+ {
+        echo "auto lo"
+        echo "iface lo inet loopback"
+        echo
+        echo "auto $SECOND_INTERFACE"
+        echo "iface $SECOND_INTERFACE inet dhcp"
+        echo
+        echo "auto vmbr0"
+        echo "iface vmbr0 inet static"
+        echo "    address 192.168.122.146/24"
+        echo "    gateway 192.168.122.1"
+        echo "    bridge-ports $SECOND_INTERFACE"
+        echo "    bridge-stp off"
+        echo "    bridge-fd 0"
+        echo
+        echo "source /etc/network/interfaces.d/*"
+    } > /etc/network/interfaces || { echo "Failed to write /etc/network/interfaces"; exit 1; }
+
+    sed -i 's/127.0.1.1/192.168.122.146/g' /etc/hosts 
 
     # Créer un fichier de marquage pour indiquer que le script a été exécuté avant le redémarrage
     touch "$MARKER_FILE"
@@ -66,25 +85,7 @@ else
 
     # Terminer les configurations de base
     apt autoremove -y
- {
-        echo "auto lo"
-        echo "iface lo inet loopback"
-        echo
-        echo "auto $SECOND_INTERFACE"
-        echo "iface $SECOND_INTERFACE inet dhcp"
-        echo
-        echo "auto vmbr0"
-        echo "iface vmbr0 inet static"
-        echo "    address 192.168.122.146/24"
-        echo "    gateway 192.168.122.1"
-        echo "    bridge-ports $SECOND_INTERFACE"
-        echo "    bridge-stp off"
-        echo "    bridge-fd 0"
-        echo
-        echo "source /etc/network/interfaces.d/*"
-    } > /etc/network/interfaces || { echo "Failed to write /etc/network/interfaces"; exit 1; }
-
-    sed -i 's/127.0.1.1/192.168.122.146/g' /etc/hosts    
+   
     
     # Redémarrer les services Proxmox pour appliquer la nouvelle configuration
     poweroff
