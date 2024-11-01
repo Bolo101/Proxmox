@@ -39,7 +39,7 @@ if [ ! -f "$MARKER_FILE" ]; then
         echo "iface lo inet loopback"
         echo
         echo "auto $SECOND_INTERFACE"
-        echo "iface $SECOND_INTERFACE inet dhcp"
+        echo "iface $SECOND_INTERFACE inet manual"
         echo
         echo "auto vmbr0"
         echo "iface vmbr0 inet static"
