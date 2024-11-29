@@ -32,13 +32,13 @@ def install_packages():
         deb_path = os.path.join(CACHE_DIR, package)
         if os.path.exists(deb_path):
             print(f"Installation de {package}...")
-            run_command(f"sudo dpkg -i {deb_path}")
+            run_command(f"dpkg -i {deb_path}")
         else:
             print(f"Avertissement : {package} non trouvé dans le cache !")
 
     # Corriger les dépendances cassées
-    print("Correction des dépendances cassées...")
-    run_command("sudo apt-get -f install -y")
+    #print("Correction des dépendances cassées...")
+    #run_command("apt-get -f install -y")
 
     print("Tous les paquets ont été installés avec succès !")
 
