@@ -1,6 +1,7 @@
 import os
 import subprocess
 import sys
+import glob
 
 # Directory containing the copied .deb files from the USB
 CACHE_DIR = "/mnt/usb/apt-cache"
@@ -37,13 +38,14 @@ if not os.path.isdir(CACHE_DIR):
     print(f"Error: Cache directory {CACHE_DIR} does not exist!")
     sys.exit(1)
 
-# Step 3: Install the .deb packages using dpkg
+# Step 3: Install the .deb packages individually using dpkg
 print("Installing packages using dpkg -i...")
-try:
-    run_command(f"dpkg -i {CACHE_DIR}/*.deb")
-except Exception as e:
-    print(f"Error occurred during dpkg -i command: {e}")
-    sys.exit(1)
+deb_files = glob.glob(f"{CACHE_DIR}/*.deb")
+for deb_file in deb_files:
+    try:
+        run_command(f"dpkg -i {deb_file}")
+    except Exception as e:
+        print(f"Warning: Failed to install {deb_file}. Continuing...")
 
 # Step 4: Fix any missing dependencies with apt-get
 print("Fixing dependencies with apt-get -f...")
