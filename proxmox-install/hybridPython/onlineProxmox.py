@@ -5,7 +5,7 @@ import json
 # Configuration
 CACHE_DIR = "/mnt/usb/apt-cache"
 INSTALL_ORDER_FILE = "/mnt/usb/install_order.json"
-ARCHIVE_FILE = "/mnt/usb/usb.tar.gz"
+ARCHIVE_FILE = "/mnt/usb.tar.gz"
 
 PACKAGES = ["gnome", "chromium"]
 
