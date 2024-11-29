@@ -2,15 +2,15 @@ import os
 import subprocess
 import json
 
-# Directories
+# Configuration
 CACHE_DIR = "/mnt/usb/apt-cache"
 INSTALL_ORDER_FILE = "/mnt/usb/install_order.json"
+ARCHIVE_FILE = "/mnt/usb/usb.tar.gz"
 
-# Packages to install
 PACKAGES = ["gnome", "chromium"]
 
 def run_command(command, ignore_errors=False):
-    """Execute a shell command."""
+    """Run a shell command."""
     try:
         subprocess.check_call(command, shell=True)
     except subprocess.CalledProcessError as e:
@@ -20,49 +20,54 @@ def run_command(command, ignore_errors=False):
         else:
             print(f"Warning: Command failed but ignored: {command}\n{e}")
 
-def download_and_trace(packages):
-    """Download and trace installation order."""
+def download_packages(packages):
+    """Download packages and their dependencies."""
     os.makedirs(CACHE_DIR, exist_ok=True)
-    install_order = []
 
-    print("Updating package lists...")
-    # Allow errors during apt update
+    # Update apt package lists
+    print("Updating apt package lists...")
     run_command("apt update", ignore_errors=True)
 
+    install_order = []
+
+    # Process each package
     for package in packages:
-        print(f"Installing {package} and tracing dependencies...")
+        print(f"Processing package: {package}")
         try:
-            # Install package and capture the list of installed files
-            command = (
-                f"apt-get install -y --print-uris --reinstall {package} "
-                "| grep -oP \"'/var/cache/apt/archives/[^\']+\\.deb'\" "
-                "| sed \"s/'//g\""
-            )
-            deb_files = subprocess.check_output(command, shell=True, text=True).splitlines()
-            for deb_file in deb_files:
-                package_name = os.path.basename(deb_file)
-                if package_name not in install_order:
-                    install_order.append(package_name)
+            # Record install order
+            command = f"apt-get -y --print-uris --reinstall install {package} | grep -oP \"'(.*?)'\" | sed \"s/'//g\""
+            package_urls = subprocess.check_output(command, shell=True, text=True).splitlines()
 
-            # Actually install the package
-            run_command(f"apt-get install -y {package}")
-        except subprocess.CalledProcessError:
-            print(f"Failed to install {package}. Check logs for more details.")
+            for url in package_urls:
+                deb_name = os.path.basename(url)
+                if deb_name not in install_order:
+                    install_order.append(deb_name)
 
-    # Save install order to JSON
-    print("Saving install order to JSON...")
+            # Download packages
+            run_command(f"apt-get -y --download-only install {package}")
+
+        except subprocess.CalledProcessError as e:
+            print(f"Failed to process {package}: {e}")
+            continue
+
+    # Save install order
+    print(f"Saving install order to {INSTALL_ORDER_FILE}...")
     with open(INSTALL_ORDER_FILE, "w") as f:
         json.dump(install_order, f, indent=4)
 
-    # Copy downloaded packages to USB directory
-    print("Copying downloaded packages to USB...")
+    # Copy downloaded packages to the USB directory
+    print(f"Copying downloaded packages to {CACHE_DIR}...")
     run_command(f"cp /var/cache/apt/archives/*.deb {CACHE_DIR}")
 
-    print(f"Install order and packages saved to {CACHE_DIR} and {INSTALL_ORDER_FILE}.")
+def create_archive():
+    """Create a compressed tar archive of the USB directory."""
+    print(f"Creating archive {ARCHIVE_FILE}...")
+    run_command(f"tar -czvf {ARCHIVE_FILE} /mnt/usb")
 
 if __name__ == "__main__":
     try:
-        download_and_trace(PACKAGES)
+        download_packages(PACKAGES)
+        create_archive()
+        print(f"Setup completed successfully. Archive created at {ARCHIVE_FILE}.")
     except Exception as e:
-        print(f"Critical error occurred: {e}")
-        print("Exiting the script.")
+        print(f"Critical error: {e}")
