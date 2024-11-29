@@ -2,45 +2,46 @@ import os
 import subprocess
 import json
 
-# Répertoires d'entrée
+# Input directories
 CACHE_DIR = "/mnt/usb/apt-cache"
 INSTALL_ORDER_FILE = "/mnt/usb/install_order.json"
 
 def run_command(command):
-    """Exécute une commande shell."""
+    """Execute a shell command."""
     try:
         subprocess.check_call(command, shell=True)
     except subprocess.CalledProcessError as e:
-        print(f"Erreur lors de l'exécution de la commande: {command}\n{e}")
+        print(f"Error running command: {command}\n{e}")
         raise
 
 def install_packages():
-    """Installe les paquets dans le bon ordre directement depuis le cache local."""
+    """Install packages in the correct order directly from the cache."""
     if not os.path.exists(CACHE_DIR):
-        raise FileNotFoundError(f"Le répertoire de cache {CACHE_DIR} n'existe pas !")
+        raise FileNotFoundError(f"The cache directory {CACHE_DIR} does not exist!")
 
     if not os.path.exists(INSTALL_ORDER_FILE):
-        raise FileNotFoundError(f"Le fichier d'ordre d'installation {INSTALL_ORDER_FILE} n'existe pas !")
+        raise FileNotFoundError(f"The installation order file {INSTALL_ORDER_FILE} does not exist!")
 
-    # Charge l'ordre d'installation des paquets
+    # Load the installation order of packages
     with open(INSTALL_ORDER_FILE, "r") as f:
         install_order = json.load(f)
 
-    # Installer les paquets dans l'ordre
-    print("Installation des paquets dans le bon ordre...")
+    # Install the packages in order
+    print("Installing packages in the correct order...")
     for package in install_order:
         deb_path = os.path.join(CACHE_DIR, package)
         if os.path.exists(deb_path):
-            print(f"Installation de {package}...")
-            run_command(f"dpkg -i {deb_path}")
+            print(f"Installing {package}...")
+            try:
+                run_command(f"dpkg -i --auto-deconfigure {deb_path}")
+            except subprocess.CalledProcessError:
+                print(f"Failed to install {package}. Attempting to fix dependencies...")
+                run_command("apt-get -f install -y")  # Fix broken dependencies
         else:
-            print(f"Avertissement : {package} non trouvé dans le cache !")
+            print(f"Warning: {package} not found in cache!")
 
-    # Corriger les dépendances cassées
-    #print("Correction des dépendances cassées...")
-    #run_command("apt-get -f install -y")
-
-    print("Tous les paquets ont été installés avec succès !")
+    print("All packages have been installed successfully!")
 
 if __name__ == "__main__":
     install_packages()
+
