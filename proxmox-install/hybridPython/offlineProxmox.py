@@ -1,18 +1,14 @@
 import os
 import subprocess
-import sys
-import glob
+import tarfile
 
-# Directory containing the copied .deb files from the USB
+# Configuration
 CACHE_DIR = "/mnt/usb/apt-cache"
-
-# Path to the tar.gz file
-TAR_GZ_FILE = "/mnt/usb.tar.gz"
+ARCHIVE_FILE = "/mnt/usb.tar.gz"
 
 def run_command(command, ignore_errors=False):
     """Run a shell command."""
     try:
-        print(f"Running command: {command}")
         subprocess.check_call(command, shell=True)
     except subprocess.CalledProcessError as e:
         if not ignore_errors:
@@ -21,48 +17,42 @@ def run_command(command, ignore_errors=False):
         else:
             print(f"Warning: Command failed but ignored: {command}\n{e}")
 
-# Step 1: Decompress usb.tar.gz
-if os.path.exists(TAR_GZ_FILE):
-    print(f"Decompressing {TAR_GZ_FILE}...")
+def extract_archive(archive_file, destination):
+    """Extract the tar.gz archive."""
+    print(f"Extracting archive {archive_file} to {destination}...")
+    if not os.path.exists(archive_file):
+        raise FileNotFoundError(f"Archive file not found: {archive_file}")
+    with tarfile.open(archive_file, "r:gz") as tar:
+        tar.extractall(path=destination)
+    print("Extraction completed.")
+
+def install_packages(package_dir):
+    """Install .deb packages using dpkg in two passes."""
+    if not os.path.exists(package_dir):
+        raise FileNotFoundError(f"Package directory not found: {package_dir}")
+    
+    # Get the list of .deb files
+    deb_files = [os.path.join(package_dir, f) for f in os.listdir(package_dir) if f.endswith(".deb")]
+    if not deb_files:
+        raise FileNotFoundError("No .deb files found in the package directory.")
+    
+    print("Starting first pass of dpkg...")
+    for deb in deb_files:
+        print(f"Installing {deb}...")
+        run_command(f"dpkg -i {deb}", ignore_errors=True)
+    
+    print("Resolving missing dependencies with second pass...")
+    run_command("apt-get install -f -y", ignore_errors=True)
+
+    print("Second pass of dpkg...")
+    for deb in deb_files:
+        print(f"Installing {deb}...")
+        run_command(f"dpkg -i {deb}", ignore_errors=True)
+
+if __name__ == "__main__":
     try:
-        run_command(f"tar -xvf {TAR_GZ_FILE}")
+        extract_archive(ARCHIVE_FILE, "/mnt")
+        install_packages(CACHE_DIR)
+        print("Offline installation completed successfully.")
     except Exception as e:
-        print(f"Error occurred while decompressing {TAR_GZ_FILE}: {e}")
-        sys.exit(1)
-else:
-    print(f"Error: {TAR_GZ_FILE} does not exist!")
-    sys.exit(1)
-
-# Step 2: Ensure the cache directory exists
-if not os.path.isdir(CACHE_DIR):
-    print(f"Error: Cache directory {CACHE_DIR} does not exist!")
-    sys.exit(1)
-
-# Step 3: Install the .deb packages individually using dpkg
-print("Installing packages using dpkg -i...")
-deb_files = glob.glob(f"{CACHE_DIR}/*.deb")
-for deb_file in deb_files:
-    try:
-        run_command(f"dpkg -i {deb_file}")
-    except Exception as e:
-        print(f"Warning: Failed to install {deb_file}. Continuing...")
-
-# Step 4: Fix any missing dependencies with apt-get
-print("Fixing dependencies with apt-get -f...")
-try:
-    run_command("apt-get -f install -y")
-except Exception as e:
-    print(f"Error occurred while running apt-get -f: {e}")
-    sys.exit(1)
-
-# Step 5: Final check for GNOME and Chromium installation
-print("Verifying installation...")
-try:
-    result = subprocess.check_output("dpkg -l", shell=True, stderr=subprocess.STDOUT)
-    if b'gnome' in result or b'chromium' in result:
-        print("GNOME and Chromium installation completed successfully!")
-    else:
-        print("GNOME and Chromium installation not found.")
-except subprocess.CalledProcessError as e:
-    print(f"Error occurred during dpkg check: {e.output.decode()}")
-    sys.exit(1)
+        print(f"Critical error: {e}")

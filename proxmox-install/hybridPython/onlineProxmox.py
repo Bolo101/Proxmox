@@ -5,7 +5,7 @@ import json
 # Configuration
 CACHE_DIR = "/mnt/usb/apt-cache"
 INSTALL_ORDER_FILE = "/mnt/usb/install_order.json"
-ARCHIVE_FILE = "usb.tar.gz"
+ARCHIVE_FILE = "usb.tar.gz"  # Store archive in /mnt directory
 
 PACKAGES = ["gnome", "chromium"]
 
@@ -62,7 +62,8 @@ def download_packages(packages):
 def create_archive():
     """Create a compressed tar archive of the USB directory."""
     print(f"Creating archive {ARCHIVE_FILE}...")
-    run_command(f"tar -czvf {ARCHIVE_FILE} /mnt/usb")
+    # Change directory to /mnt before creating the archive to avoid including /mnt in the path
+    run_command(f"cd /mnt && tar -czvf {ARCHIVE_FILE} usb")
 
 if __name__ == "__main__":
     try:
