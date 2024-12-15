@@ -17,6 +17,10 @@ dpkg -i "$CACHE_DIR"/*.deb
 echo "Fixing dependencies with apt-get -f..."
 apt-get -f install -y
 
+# Install the .deb packages using dpkg
+echo "Installing packages using dpkg -i..."
+dpkg -i "$CACHE_DIR"/*.deb
+
 # Final check for GNOME and Chromium installation
 echo "Verifying installation..."
 dpkg -l | grep -E 'gnome|chromium'
