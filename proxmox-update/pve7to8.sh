@@ -1,20 +1,46 @@
-echo "Updating source..."
+#!/bin/bash
+
+set -e
+
+# Inform the user about the process
+echo "Starting Proxmox VE 7 to 8 migration using no-subscription repository..."
+
+# Update the current package sources
+echo "Updating package sources..."
 apt update
 sleep 1
-echo "Updating current packages..."
-apt dist-upgrade
-echo "Update debain sources from bullseye to bookworm..."
+
+# Upgrade all current packages
+echo "Upgrading current packages..."
+apt dist-upgrade -y
+
+# Update Debian sources from Bullseye to Bookworm
+echo "Updating Debian sources from Bullseye to Bookworm..."
 sed -i 's/bullseye/bookworm/g' /etc/apt/sources.list
-echo "Done!"
-echo "Adding Ceph package repository"
-echo "deb http://download.proxmox.com/debian/ceph-quincy bookworm no-subscription" > /etc/apt/sources.list.d/ceph.list
-echo "Done"
-echo "Updating new source repositories..."
+
+# Remove existing Proxmox enterprise repository if it exists
+echo "Removing Proxmox enterprise repository if present..."
+rm -f /etc/apt/sources.list.d/pve-enterprise.list
+
+# Add the Proxmox VE no-subscription repository
+echo "Adding Proxmox VE 8 no-subscription repository..."
+echo "deb http://download.proxmox.com/debian/pve bookworm pve-no-subscription" > /etc/apt/sources.list.d/pve-no-subscription.list
+
+# Update package sources again
+echo "Updating package sources with new repositories..."
 apt update
-echo "Done"
-echo "Updating packages from new sources..."
-apt dist-upgrade 
-echo "Done"
-echo "Requesting system poweroff for clean reboot"
+
+# Upgrade all packages to the new version
+echo "Upgrading to Proxmox VE 8 packages..."
+apt dist-upgrade -y
+
+# Clean up old packages and dependencies
+echo "Cleaning up old packages..."
+apt autoremove --purge -y
+
+# Inform the user about the reboot
+echo "Migration completed. The system will now reboot..."
 sleep 2
-poweroff
+
+# Reboot the system
+reboot
