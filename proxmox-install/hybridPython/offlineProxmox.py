@@ -1,58 +1,71 @@
-import os
+import logging
 import subprocess
 import tarfile
+from pathlib import Path
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 # Configuration
-CACHE_DIR = "/mnt/usb/apt-cache"
-ARCHIVE_FILE = "/mnt/usb.tar.gz"
+CACHE_DIR = Path("/mnt/usb/apt-cache")
+ARCHIVE_FILE = Path("/root/usb.tar.gz")
 
 def run_command(command, ignore_errors=False):
-    """Run a shell command."""
+    """Run a shell command securely."""
     try:
-        subprocess.check_call(command, shell=True)
+        subprocess.check_call(command)  # `shell=False` is the default
     except subprocess.CalledProcessError as e:
+        logging.error(f"Command failed: {' '.join(command)} - {e}")
         if not ignore_errors:
-            print(f"Error running command: {command}\n{e}")
             raise
-        else:
-            print(f"Warning: Command failed but ignored: {command}\n{e}")
 
-def extract_archive(archive_file, destination):
-    """Extract the tar.gz archive."""
-    print(f"Extracting archive {archive_file} to {destination}...")
-    if not os.path.exists(archive_file):
+def extract_archive(archive_file: Path, destination: Path):
+    """Securely extract a tar.gz archive."""
+    logging.info(f"Extracting archive {archive_file} to {destination}...")
+    if not archive_file.exists():
         raise FileNotFoundError(f"Archive file not found: {archive_file}")
-    with tarfile.open(archive_file, "r:gz") as tar:
-        tar.extractall(path=destination)
-    print("Extraction completed.")
 
-def install_packages(package_dir):
+    with tarfile.open(archive_file, "r:gz") as tar:
+        def is_within_directory(directory, target):
+            abs_directory = Path(directory).resolve()
+            abs_target = Path(target).resolve()
+            return abs_target.is_relative_to(abs_directory)
+
+        for member in tar.getmembers():
+            member_path = destination / member.name
+            if not is_within_directory(destination, member_path):
+                raise ValueError(f"Attempted Path Traversal in Tar File: {member_path}")
+            tar.extract(member, path=destination)
+
+    logging.info("Extraction completed.")
+
+def install_packages(package_dir: Path):
     """Install .deb packages using dpkg in two passes."""
-    if not os.path.exists(package_dir):
+    if not package_dir.exists():
         raise FileNotFoundError(f"Package directory not found: {package_dir}")
     
     # Get the list of .deb files
-    deb_files = [os.path.join(package_dir, f) for f in os.listdir(package_dir) if f.endswith(".deb")]
+    deb_files = list(package_dir.glob("*.deb"))
     if not deb_files:
         raise FileNotFoundError("No .deb files found in the package directory.")
     
-    print("Starting first pass of dpkg...")
+    logging.info("Starting first pass of dpkg...")
     for deb in deb_files:
-        print(f"Installing {deb}...")
-        run_command(f"dpkg -i {deb}", ignore_errors=True)
+        logging.info(f"Installing {deb}...")
+        run_command(["dpkg", "-i", str(deb)], ignore_errors=True)
     
-    print("Resolving missing dependencies with second pass...")
-    run_command("apt-get install -f -y", ignore_errors=True)
+    logging.info("Resolving missing dependencies with second pass...")
+    run_command(["apt-get", "install", "-f", "-y"], ignore_errors=True)
 
-    print("Second pass of dpkg...")
+    logging.info("Second pass of dpkg...")
     for deb in deb_files:
-        print(f"Installing {deb}...")
-        run_command(f"dpkg -i {deb}", ignore_errors=True)
+        logging.info(f"Installing {deb}...")
+        run_command(["dpkg", "-i", str(deb)], ignore_errors=True)
 
 if __name__ == "__main__":
     try:
-        extract_archive(ARCHIVE_FILE, "/mnt")
+        extract_archive(ARCHIVE_FILE, Path("/mnt"))
         install_packages(CACHE_DIR)
-        print("Offline installation completed successfully.")
+        logging.info("Offline installation completed successfully.")
     except Exception as e:
-        print(f"Critical error: {e}")
+        logging.critical(f"Critical error: {e}", exc_info=True)

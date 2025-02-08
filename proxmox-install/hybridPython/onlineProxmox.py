@@ -1,74 +1,60 @@
-import os
 import subprocess
-import json
+import logging
+from pathlib import Path
+import shutil
 
 # Configuration
-CACHE_DIR = "/mnt/usb/apt-cache"
-INSTALL_ORDER_FILE = "/mnt/usb/install_order.json"
-ARCHIVE_FILE = "usb.tar.gz"  # Store archive in /mnt directory
+CACHE_DIR = Path("/mnt/usb/apt-cache/")
+ARCHIVE_FILE = Path("usb.tar.gz")  # Store archive in /mnt directory
+INSTALL_FILE = Path("/var/cache/apt/archives/")
 
 PACKAGES = ["gnome", "chromium"]
+
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def run_command(command, ignore_errors=False):
     """Run a shell command."""
     try:
-        subprocess.check_call(command, shell=True)
+        subprocess.check_call(command)
     except subprocess.CalledProcessError as e:
         if not ignore_errors:
-            print(f"Error running command: {command}\n{e}")
-            raise
+            logging.error(f"Error running command: {command}\n{e}")
         else:
-            print(f"Warning: Command failed but ignored: {command}\n{e}")
+            logging.warning(f"Warning: Command failed but ignored: {command}\n{e}")
 
 def download_packages(packages):
     """Download packages and their dependencies."""
-    os.makedirs(CACHE_DIR, exist_ok=True)
 
     # Update apt package lists
-    print("Updating apt package lists...")
-    run_command("apt update", ignore_errors=True)
-
-    install_order = []
+    logging.info("Updating apt package lists...")
+    run_command(["apt", "update"], ignore_errors=True)
 
     # Process each package
     for package in packages:
-        print(f"Processing package: {package}")
+        logging.info(f"Processing package: {package}")
         try:
-            # Record install order
-            command = f"apt-get -y --print-uris --reinstall install {package} | grep -oP \"'(.*?)'\" | sed \"s/'//g\""
-            package_urls = subprocess.check_output(command, shell=True, text=True).splitlines()
-
-            for url in package_urls:
-                deb_name = os.path.basename(url)
-                if deb_name not in install_order:
-                    install_order.append(deb_name)
-
             # Download packages
-            run_command(f"apt-get -y --download-only install {package}")
+            run_command(["apt-get", "-y", "--download-only", "install", package])
 
         except subprocess.CalledProcessError as e:
-            print(f"Failed to process {package}: {e}")
+            logging.error(f"Failed to process {package}: {e}")
             continue
 
-    # Save install order
-    print(f"Saving install order to {INSTALL_ORDER_FILE}...")
-    with open(INSTALL_ORDER_FILE, "w") as f:
-        json.dump(install_order, f, indent=4)
-
     # Copy downloaded packages to the USB directory
-    print(f"Copying downloaded packages to {CACHE_DIR}...")
-    run_command(f"cp /var/cache/apt/archives/*.deb {CACHE_DIR}")
+    logging.info(f"Copying downloaded packages to {CACHE_DIR}...")
+    shutil.copytree(INSTALL_FILE, CACHE_DIR)
 
 def create_archive():
     """Create a compressed tar archive of the USB directory."""
-    print(f"Creating archive {ARCHIVE_FILE}...")
+    logging.info(f"Creating archive {ARCHIVE_FILE}...")
     # Change directory to /mnt before creating the archive to avoid including /mnt in the path
-    run_command(f"cd /mnt && tar -czvf {ARCHIVE_FILE} usb")
+    run_command(["tar", "-czvf", str(ARCHIVE_FILE), "-C", "/mnt", "usb"])
 
 if __name__ == "__main__":
     try:
         download_packages(PACKAGES)
         create_archive()
-        print(f"Setup completed successfully. Archive created at {ARCHIVE_FILE}.")
+        logging.info(f"Setup completed successfully. Archive created at {ARCHIVE_FILE}.")
     except Exception as e:
-        print(f"Critical error: {e}")
+        logging.critical(f"Critical error: {e}")
