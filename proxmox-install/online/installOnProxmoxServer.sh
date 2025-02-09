@@ -11,7 +11,7 @@ apt update
 sleep 5
 
 # Installer xfce4, lightdm et chromium à partir du dépôt local
-echo "Installation de xfce4, lightdm et chromium..."
+echo "Installation de gnome et chromium..."
 apt-get install -y gnome chromium
 sleep 5
 
