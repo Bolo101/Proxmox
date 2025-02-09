@@ -12,7 +12,7 @@ sleep 5
 
 # Installer xfce4, lightdm et chromium à partir du dépôt local
 echo "Installation de xfce4, lightdm et chromium..."
-apt-get install -y xfce4 lightdm chromium
+apt-get install -y gnome chromium
 sleep 5
 
 # Configurer le clavier en français (azerty)
@@ -23,11 +23,6 @@ sleep 5
 
 # Redémarrer le service de configuration du clavier pour appliquer les modifications
 service keyboard-setup restart
-sleep 5
-
-# Activer lightdm pour le démarrage automatique
-echo "Activation de lightdm..."
-systemctl enable lightdm
 sleep 5
 
 # Redémarrer le système

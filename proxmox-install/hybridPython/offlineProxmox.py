@@ -13,7 +13,7 @@ ARCHIVE_FILE = Path("/root/usb.tar.gz")
 def run_command(command, ignore_errors=False):
     """Run a shell command securely."""
     try:
-        subprocess.check_call(command)  # `shell=False` is the default
+        subprocess.check_call(command)
     except subprocess.CalledProcessError as e:
         logging.error(f"Command failed: {' '.join(command)} - {e}")
         if not ignore_errors:
