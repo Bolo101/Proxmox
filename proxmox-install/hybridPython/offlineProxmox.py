@@ -2,15 +2,16 @@ import logging
 import subprocess
 import tarfile
 from pathlib import Path
+from typing import List
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 # Configuration
-CACHE_DIR = Path("/mnt/usb/apt-cache")
-ARCHIVE_FILE = Path("/root/usb.tar.gz")
+CACHE_DIR: Path = Path("/mnt/usb/apt-cache")
+ARCHIVE_FILE: Path = Path("/root/usb.tar.gz")
 
-def run_command(command, ignore_errors=False):
+def run_command(command: List[str], ignore_errors: bool = False) -> None:
     """Run a shell command securely."""
     try:
         subprocess.check_call(command)  # `shell=False` is the default
@@ -19,16 +20,16 @@ def run_command(command, ignore_errors=False):
         if not ignore_errors:
             raise
 
-def extract_archive(archive_file: Path, destination: Path):
+def extract_archive(archive_file: Path, destination: Path) -> None:
     """Securely extract a tar.gz archive."""
     logging.info(f"Extracting archive {archive_file} to {destination}...")
     if not archive_file.exists():
         raise FileNotFoundError(f"Archive file not found: {archive_file}")
 
     with tarfile.open(archive_file, "r:gz") as tar:
-        def is_within_directory(directory, target):
-            abs_directory = Path(directory).resolve()
-            abs_target = Path(target).resolve()
+        def is_within_directory(directory: Path, target: Path) -> bool:
+            abs_directory = directory.resolve()
+            abs_target = target.resolve()
             return abs_target.is_relative_to(abs_directory)
 
         for member in tar.getmembers():
@@ -39,13 +40,13 @@ def extract_archive(archive_file: Path, destination: Path):
 
     logging.info("Extraction completed.")
 
-def install_packages(package_dir: Path):
+def install_packages(package_dir: Path) -> None:
     """Install .deb packages using dpkg in two passes."""
     if not package_dir.exists():
         raise FileNotFoundError(f"Package directory not found: {package_dir}")
     
     # Get the list of .deb files
-    deb_files = list(package_dir.glob("*.deb"))
+    deb_files: List[Path] = list(package_dir.glob("*.deb"))
     if not deb_files:
         raise FileNotFoundError("No .deb files found in the package directory.")
     

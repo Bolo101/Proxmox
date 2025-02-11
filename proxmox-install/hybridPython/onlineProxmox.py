@@ -2,18 +2,19 @@ import subprocess
 import logging
 from pathlib import Path
 import shutil
+from typing import List
 
 # Configuration
-CACHE_DIR = Path("/mnt/usb/apt-cache/")
-ARCHIVE_FILE = Path("usb.tar.gz")  # Store archive in /mnt directory
-INSTALL_FILE = Path("/var/cache/apt/archives/")
+CACHE_DIR: Path = Path("/mnt/usb/apt-cache/")
+ARCHIVE_FILE: Path = Path("usb.tar.gz")
+INSTALL_FILE: Path = Path("/var/cache/apt/archives/")
 
-PACKAGES = ["gnome", "chromium"]
+PACKAGES: List[str] = ["gnome", "chromium"]
 
 # Set up logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-def run_command(command, ignore_errors=False):
+def run_command(command: List[str], ignore_errors: bool = False) -> None:
     """Run a shell command."""
     try:
         subprocess.check_call(command)
@@ -23,9 +24,9 @@ def run_command(command, ignore_errors=False):
         else:
             logging.warning(f"Warning: Command failed but ignored: {command}\n{e}")
 
-def download_packages(packages):
+def download_packages(packages: List[str]) -> None:
     """Download packages and their dependencies."""
-
+    
     # Update apt package lists
     logging.info("Updating apt package lists...")
     run_command(["apt", "update"], ignore_errors=True)
@@ -36,7 +37,6 @@ def download_packages(packages):
         try:
             # Download packages
             run_command(["apt-get", "-y", "--download-only", "install", package])
-
         except subprocess.CalledProcessError as e:
             logging.error(f"Failed to process {package}: {e}")
             continue
@@ -45,7 +45,7 @@ def download_packages(packages):
     logging.info(f"Copying downloaded packages to {CACHE_DIR}...")
     shutil.copytree(INSTALL_FILE, CACHE_DIR)
 
-def create_archive():
+def create_archive() -> None:
     """Create a compressed tar archive of the USB directory."""
     logging.info(f"Creating archive {ARCHIVE_FILE}...")
     # Change directory to /mnt before creating the archive to avoid including /mnt in the path
