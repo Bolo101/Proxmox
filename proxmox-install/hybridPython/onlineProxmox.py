@@ -4,6 +4,7 @@ import subprocess
 import logging
 from pathlib import Path
 import shutil
+import os
 from typing import List
 
 # Configuration
@@ -45,18 +46,50 @@ def download_packages(packages: List[str]) -> None:
 
     # Copy downloaded packages to the USB directory
     logging.info(f"Copying downloaded packages to {CACHE_DIR}...")
-    shutil.copytree(INSTALL_FILE, CACHE_DIR)
+    try:
+        shutil.copytree(INSTALL_FILE, CACHE_DIR)
+    except FileExistsError:
+        logging.warning(f"Cache directory {CACHE_DIR} already exists. Removing and recreating...")
+        shutil.rmtree(CACHE_DIR)
+        shutil.copytree(INSTALL_FILE, CACHE_DIR)
+    except PermissionError:
+        logging.error(f"Permission denied when copying to {CACHE_DIR}. Check your permissions.")
+        raise
+    except OSError as e:
+        logging.error(f"OS error when copying files: {e}")
+        raise
 
 def create_archive() -> None:
     """Create a compressed tar archive of the USB directory."""
     logging.info(f"Creating archive {ARCHIVE_FILE}...")
-    # Change directory to /mnt before creating the archive to avoid including /mnt in the path
-    run_command(["tar", "-czvf", str(ARCHIVE_FILE), "-C", "/mnt", "usb"])
+    try:
+        # Change directory to /mnt before creating the archive to avoid including /mnt in the path
+        run_command(["tar", "-czvf", str(ARCHIVE_FILE), "-C", "/mnt", "usb"])
+    except subprocess.SubprocessError as e:
+        logging.error(f"Failed to create archive: {e}")
+        raise
+    except FileNotFoundError:
+        logging.error(f"Directory or file not found when creating archive")
+        raise
 
 if __name__ == "__main__":
     try:
+        # Check if running as root
+        if os.geteuid() != 0:
+            logging.error("This script must be run as root")
+            exit(1)
+            
+        # Create cache directory if it doesn't exist
+        os.makedirs(CACHE_DIR.parent, exist_ok=True)
+        
         download_packages(PACKAGES)
         create_archive()
         logging.info(f"Setup completed successfully. Archive created at {ARCHIVE_FILE}.")
-    except Exception as e:
-        logging.critical(f"Critical error: {e}")
+    except PermissionError:
+        logging.critical("Permission error: Make sure you have the necessary permissions")
+    except FileNotFoundError as e:
+        logging.critical(f"File not found: {e}")
+    except OSError as e:
+        logging.critical(f"OS error: {e}")
+    except subprocess.SubprocessError as e:
+        logging.critical(f"Subprocess error: {e}")
