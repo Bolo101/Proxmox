@@ -28,7 +28,7 @@ sudo python3 /root/onlineProxmox.py
 
 **Option B: Download from archive.org**
 
-If you don't have a Linux machine with Internet, download the `usb.tar.gz` archive from archive.org.
+If you don't have a Linux machine with Internet, download the `usb.tar.gz` archive from [archive.org](https://archive.org/details/proxmoxGUI-offline)
 
 ## Step 3: Prepare the USB drive
 
