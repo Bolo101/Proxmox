@@ -48,6 +48,8 @@ The hybrid approach uses a two-step process: download packages on an internet-co
 
 #### 2a. Bash Implementation
 
+User-friendly install procedure available [here](./proxmox-install/hybrid/README.md)
+
 **Step 1: Package Download (Internet-Connected Machine)**
 
 1. Copy `onlineProxmox.sh` to the `/root` directory:
@@ -91,6 +93,8 @@ The hybrid approach uses a two-step process: download packages on an internet-co
    - Configure GNOME autostart for the sleep disable script
 
 #### 2b. Python Implementation
+
+User-friendly install procedure available [here](./proxmox-install/hybridPython/README.md)
 
 **Step 1: Package Download (Internet-Connected Machine)**
 
