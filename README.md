@@ -74,7 +74,7 @@ User-friendly install procedure available [here](./proxmox-install/hybrid/README
 **Step 2: Offline Installation**
 
 1. Transfer both files to the offline Proxmox server's `/root` directory:
-   - Generated `usb.tar.gz` archive
+   - Generated `usb.tar.gz` archive (or download [here](https://archive.org/details/proxmoxGUI-offline))
    - `OfflineProxmox.sh` script
 
 2. Run the offline installation script on the target server:
@@ -114,7 +114,7 @@ User-friendly install procedure available [here](./proxmox-install/hybridPython/
 **Step 2: Offline Installation**
 
 1. Transfer both files to the offline Proxmox server's `/root` directory:
-   - Generated `usb.tar.gz` archive
+   - Generated `usb.tar.gz` archive (or download [here](https://archive.org/details/proxmoxGUI-offline))
    - `offlineProxmox.py` script
 
 2. Run the offline installation script on the target server:
